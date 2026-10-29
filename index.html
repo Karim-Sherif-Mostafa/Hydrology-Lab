@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydroLab Master: Advanced Hydrology & Hydraulic Engineering Simulation</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;600&display=swap');
+        
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+        }
+
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.4);
+            border-radius: 9999px;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            height: 6px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+            transition: transform 0.1s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .node-pulse {
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); }
+            70% { box-shadow: 0 0 0 12px rgba(56, 189, 248, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #modal-certificate, #modal-certificate * {
+                visibility: visible;
+            }
+            #modal-certificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen overflow-x-hidden flex flex-col">
+
+    <!-- USER ONBOARDING MODAL -->
+    <div id="modal-onboarding" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-lg w-full border border-cyan-500/30 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl"></div>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-3 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl shadow-lg shadow-cyan-500/30">
+                    <i data-lucide="waves" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">HydroLab Master</h2>
+                    <p class="text-xs text-cyan-400 font-medium">Hydrology & Hydraulic Engineering Suite</p>
+                </div>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed mb-5">
+                Welcome Engineer! Step into a 10-level advanced hydraulic simulation engine. Perform computations for missing rainfall, stream gauging, Manning’s open channel flows, Rational & SCS runoff, pipe networks, detention basin routing, and hydro-electric dam spillways.
+            </p>
+
+            <form onsubmit="startGame(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1.5">Engineer / Player Name</label>
+                    <input type="text" id="player-name-input" required placeholder="e.g. Eng. Sarah Jenkins, PE" class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all">
+                </div>
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 font-extrabold text-sm text-white shadow-lg shadow-cyan-500/25 hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-4 h-4 fill-white"></i> Launch Engineering Suite
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- HEADER NAVIGATION BAR -->
+    <header class="glass-panel sticky top-0 z-40 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md">
+                <i data-lucide="droplets" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+                    HydroLab <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-semibold uppercase">Eng 10-Level Suite</span>
+                </h1>
+                <p class="text-[11px] text-slate-400">Engineer: <span id="display-player-name" class="text-cyan-300 font-semibold">Guest</span></p>
+            </div>
+        </div>
+
+        <!-- Progress Metrics & Controls HUD -->
+        <div class="flex items-center gap-3">
+            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-bold text-slate-300">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-400"></i> Time: <span id="hud-timer" class="font-mono text-cyan-300">00:00</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-bold text-amber-300">
+                <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400"></i> Score: <span id="hud-score" class="font-mono text-sm">0</span> pts
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-bold text-cyan-300">
+                <i data-lucide="compass" class="w-3.5 h-3.5 text-cyan-400"></i> Level: <span id="hud-level" class="font-mono text-sm">1</span> / 10
+            </div>
+            <button id="audio-btn" onclick="toggleAudio()" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-cyan-400 transition-colors" title="Toggle Audio Synthesizer">
+                <i data-lucide="volume-2" id="audio-icon" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- LEFT COLUMN: PHYSICS CANVAS & ENVIRONMENT SANDBOX (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- REAL-TIME 2D CANVAS PHYSICS SIMULATOR -->
+            <div class="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl">
+                <!-- Overlay Canvas Badges -->
+                <div class="absolute top-3 left-3 z-10 flex flex-wrap gap-2 pointer-events-none">
+                    <span id="badge-active-concept" class="px-3 py-1 rounded-full text-[11px] font-bold glass-panel text-cyan-300 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> Active: Missing Station Estimation
+                    </span>
+                    <span id="badge-temp" class="px-2.5 py-1 rounded-full text-[11px] font-semibold glass-panel text-amber-300">
+                        22°C Air Temp
+                    </span>
+                    <span id="badge-power" class="px-2.5 py-1 rounded-full text-[11px] font-semibold glass-panel text-emerald-300">
+                        Hydro: 42.5 MW
+                    </span>
+                </div>
+
+                <!-- Simulation Canvas -->
+                <canvas id="hydrologyCanvas" class="w-full h-[320px] sm:h-[380px] block cursor-crosshair"></canvas>
+            </div>
+
+            <!-- SANDBOX ENVIRONMENT & PHYSICS CONTROLS PANEL -->
+            <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i> Environmental Sandbox Controls
+                    </h3>
+                    <span class="text-[10px] text-cyan-400 font-mono">Interactive Real-Time Physics</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Sun Intensity Slider -->
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex justify-between text-[11px] font-bold mb-1">
+                            <span class="text-slate-400">Sun Intensity:</span>
+                            <span id="lbl-sun" class="text-amber-400 font-mono">65%</span>
+                        </div>
+                        <input type="range" id="ctrl-sun" min="0" max="100" value="65" oninput="updatePhysicsParams()" class="w-full">
+                    </div>
+
+                    <!-- Temperature Slider -->
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex justify-between text-[11px] font-bold mb-1">
+                            <span class="text-slate-400">Air Temperature:</span>
+                            <span id="lbl-temp" class="text-cyan-400 font-mono">22°C</span>
+                        </div>
+                        <input type="range" id="ctrl-temp" min="-15" max="40" value="22" oninput="updatePhysicsParams()" class="w-full">
+                    </div>
+
+                    <!-- Rainfall Intensity Slider -->
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex justify-between text-[11px] font-bold mb-1">
+                            <span class="text-slate-400">Rainfall (mm/hr):</span>
+                            <span id="lbl-rain" class="text-sky-400 font-mono">25 mm/h</span>
+                        </div>
+                        <input type="range" id="ctrl-rain" min="0" max="150" value="25" oninput="updatePhysicsParams()" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Environmental Toggles & Dam Spillway Slider -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <button id="btn-toggle-urban" onclick="toggleUrban()" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 text-xs font-bold text-slate-300 flex items-center justify-between transition-all">
+                        <span>Urbanization:</span>
+                        <span id="lbl-urban" class="text-rose-400">OFF (Natural)</span>
+                    </button>
+                    <button id="btn-toggle-deforest" onclick="toggleDeforest()" class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 text-xs font-bold text-slate-300 flex items-center justify-between transition-all">
+                        <span>Deforestation:</span>
+                        <span id="lbl-deforest" class="text-amber-400">OFF</span>
+                    </button>
+                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                        <div class="flex justify-between text-[10px] font-bold mb-1">
+                            <span class="text-slate-400">Dam Spillway Gate:</span>
+                            <span id="lbl-dam" class="text-cyan-400 font-mono">35%</span>
+                        </div>
+                        <input type="range" id="ctrl-dam" min="0" max="100" value="35" oninput="updatePhysicsParams()" class="w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- HYDROLOGY ROADMAP / MAP STRIP -->
+            <div class="glass-panel p-3.5 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-cyan-400"></i> 10-Level Engineering Roadmap
+                    </h3>
+                    <span id="journey-completion-pct" class="text-xs font-mono font-bold text-cyan-400">10% Unlocked</span>
+                </div>
+
+                <!-- 10 Nodes Map Strip -->
+                <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                    <button onclick="jumpToLevel(1)" id="map-node-1" class="map-node p-2 rounded-xl border border-cyan-500 bg-cyan-950/80 text-center transition-all flex flex-col items-center gap-1 node-pulse">
+                        <i data-lucide="cloud-rain" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span class="text-[9px] font-bold text-white">L1</span>
+                    </button>
+                    <button onclick="jumpToLevel(2)" id="map-node-2" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="waves" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L2</span>
+                    </button>
+                    <button onclick="jumpToLevel(3)" id="map-node-3" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="git-commit" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L3</span>
+                    </button>
+                    <button onclick="jumpToLevel(4)" id="map-node-4" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L4</span>
+                    </button>
+                    <button onclick="jumpToLevel(5)" id="map-node-5" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L5</span>
+                    </button>
+                    <button onclick="jumpToLevel(6)" id="map-node-6" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="pipette" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L6</span>
+                    </button>
+                    <button onclick="jumpToLevel(7)" id="map-node-7" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="container" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L7</span>
+                    </button>
+                    <button onclick="jumpToLevel(8)" id="map-node-8" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L8</span>
+                    </button>
+                    <button onclick="jumpToLevel(9)" id="map-node-9" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="disc" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L9</span>
+                    </button>
+                    <button onclick="jumpToLevel(10)" id="map-node-10" class="map-node p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-center transition-all flex flex-col items-center gap-1 opacity-50 cursor-not-allowed">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span class="text-[9px] font-bold text-slate-400">L10</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: GAMIFIED LEVEL CHALLENGE PANEL & CALCULATOR (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+
+            <!-- Active Level Card Wrapper -->
+            <div class="glass-panel p-5 sm:p-6 rounded-2xl flex flex-col justify-between border border-cyan-500/30 shadow-2xl min-h-[520px]">
+                
+                <!-- Level Top Bar Header -->
+                <div>
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                        <div>
+                            <span id="lvl-badge-category" class="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400 bg-cyan-950 px-2.5 py-1 rounded-full border border-cyan-800">
+                                Engineering Calculation
+                            </span>
+                            <h2 id="lvl-title" class="text-base font-extrabold text-white mt-1.5">
+                                Level 1: Missing Rainfall Station Estimation
+                            </h2>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-400 uppercase font-bold">Points Value</div>
+                            <div id="lvl-points-val" class="text-sm font-black text-amber-400">100 PTS</div>
+                        </div>
+                    </div>
+
+                    <!-- FORMULA CHEATSHEET ACCORDION -->
+                    <div class="mb-4 bg-slate-900/90 rounded-xl border border-slate-800 overflow-hidden">
+                        <button onclick="toggleCheatSheet()" class="w-full px-3.5 py-2 flex items-center justify-between text-xs font-bold text-cyan-300 hover:bg-slate-800/50 transition-colors">
+                            <span class="flex items-center gap-2"><i data-lucide="book-open" class="w-4 h-4"></i> Engineering Formula Reference</span>
+                            <i data-lucide="chevron-down" id="cheatsheet-chevron" class="w-4 h-4 transition-transform"></i>
+                        </button>
+                        <div id="cheatsheet-content" class="hidden px-3.5 py-3 border-t border-slate-800 bg-slate-950/60 text-xs font-mono text-slate-300 space-y-2">
+                            <!-- Formula dynamic injection -->
+                        </div>
+                    </div>
+
+                    <!-- Question Prompt Body (Dynamically populated) -->
+                    <div id="lvl-prompt-container" class="space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Level Action Controls / Feedback Footer -->
+                <div class="mt-6 pt-4 border-t border-slate-800">
+                    <div id="lvl-feedback" class="hidden p-3 rounded-xl mb-3 text-xs font-semibold">
+                        <!-- Success/Error alert rendered here -->
+                    </div>
+                    
+                    <button id="lvl-submit-btn" onclick="submitLevelAnswer()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-cyan-500/25 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="calculator" class="w-4 h-4"></i> Validate Engineering Calculation
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FINAL PRINTABLE / DOWNLOADABLE CERTIFICATE MODAL -->
+    <div id="modal-certificate" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-lg">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-xl w-full border border-amber-500/40 shadow-2xl text-center relative overflow-hidden">
+            <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg shadow-amber-500/30 no-print">
+                <i data-lucide="award" class="w-8 h-8 text-slate-950"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white">Hydraulic Engineering Certification</h2>
+            <p class="text-xs text-slate-300 mt-1">Certified Advanced Hydrologist & Water Resources Engineer</p>
+
+            <div class="my-6 p-5 rounded-2xl bg-slate-900/90 border border-slate-800 text-left space-y-3">
+                <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">Certified Engineer:</span>
+                    <strong id="cert-player-name" class="text-cyan-300 text-sm font-semibold">Eng. Sarah Jenkins</strong>
+                </div>
+                <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">Final Cumulative Score:</span>
+                    <strong id="cert-score" class="text-amber-400 text-sm font-mono">1,500 PTS</strong>
+                </div>
+                <div class="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">Elapsed Completion Time:</span>
+                    <strong id="cert-time" class="text-cyan-400 text-xs font-mono">08:42</strong>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Professional Designation:</span>
+                    <strong id="cert-rank" class="text-emerald-400 text-xs">Principal Hydro-Engineering Consultant</strong>
+                </div>
+            </div>
+
+            <div class="flex gap-3 no-print">
+                <button onclick="window.print()" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-slate-700">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print Certificate
+                </button>
+                <button onclick="restartQuest()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg">
+                    Re-play Suite
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORE JAVASCRIPT GAME & HYDRAULIC ENGINE -->
+    <script>
+        // --- INITIALIZE LUCIDE ICONS ---
+        lucide.createIcons();
+
+        // --- WEB AUDIO API SYNTHESIZER ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+            }
+
+            playClick() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(580, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(280, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            playSuccess() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.28);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.28);
+                });
+            }
+
+            playError() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.14, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.22);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.22);
+            }
+        }
+
+        const audio = new SoundEngine();
+        function toggleAudio() {
+            audio.muted = !audio.muted;
+            const icon = document.getElementById('audio-icon');
+            if (audio.muted) {
+                icon.setAttribute('data-lucide', 'volume-x');
+            } else {
+                icon.setAttribute('data-lucide', 'volume-2');
+                audio.playClick();
+            }
+            lucide.createIcons();
+        }
+
+        // --- GLOBAL STATE & TIMER ---
+        let gameState = {
+            playerName: "Guest",
+            currentLevel: 1,
+            unlockedLevel: 1,
+            totalScore: 0,
+            levelScores: Array(11).fill(0),
+            secondsElapsed: 0,
+            timerInterval: null,
+            // Physics Sandbox Params
+            solar: 65,
+            temp: 22,
+            precip: 25,
+            urban: false,
+            deforest: false,
+            damGate: 35,
+            // Visual Dynamic Animation Triggers
+            hydroPowerMW: 42.5,
+            groundwaterActive: false,
+            stormActive: false
+        };
+
+        function startTimer() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            gameState.timerInterval = setInterval(() => {
+                gameState.secondsElapsed++;
+                const mins = Math.floor(gameState.secondsElapsed / 60).toString().padStart(2, '0');
+                const secs = (gameState.secondsElapsed % 60).toString().padStart(2, '0');
+                document.getElementById('hud-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function startGame(e) {
+            e.preventDefault();
+            audio.playClick();
+            const input = document.getElementById('player-name-input').value.trim();
+            gameState.playerName = input || "Hydraulic Engineer";
+            document.getElementById('display-player-name').innerText = gameState.playerName;
+            document.getElementById('modal-onboarding').classList.add('hidden');
+            startTimer();
+            renderLevel(1);
+        }
+
+        // --- SANDBOX CONTROLS PARAMETERS HANDLER ---
+        function updatePhysicsParams() {
+            gameState.solar = parseInt(document.getElementById('ctrl-sun').value);
+            gameState.temp = parseInt(document.getElementById('ctrl-temp').value);
+            gameState.precip = parseInt(document.getElementById('ctrl-rain').value);
+            gameState.damGate = parseInt(document.getElementById('ctrl-dam').value);
+
+            document.getElementById('lbl-sun').innerText = `${gameState.solar}%`;
+            document.getElementById('lbl-temp').innerText = `${gameState.temp}°C`;
+            document.getElementById('lbl-rain').innerText = `${gameState.precip} mm/h`;
+            document.getElementById('lbl-dam').innerText = `${gameState.damGate}%`;
+            document.getElementById('badge-temp').innerText = `${gameState.temp}°C Air Temp`;
+
+            // Calculate Hydro Power MW based on dam head & release gate
+            const head = 45; // meters
+            const Q = (gameState.damGate / 100) * 120; // m3/s
+            const MW = ((0.88 * 1000 * 9.81 * Q * head) / 1e6).toFixed(1);
+            gameState.hydroPowerMW = MW;
+            document.getElementById('badge-power').innerText = `Hydro: ${MW} MW`;
+        }
+
+        function toggleUrban() {
+            audio.playClick();
+            gameState.urban = !gameState.urban;
+            const lbl = document.getElementById('lbl-urban');
+            const btn = document.getElementById('btn-toggle-urban');
+            if (gameState.urban) {
+                lbl.innerText = 'ON (Asphalt)';
+                lbl.className = 'text-cyan-400';
+                btn.className = 'p-2.5 rounded-xl bg-cyan-950 border border-cyan-500 text-xs font-bold text-slate-100 flex items-center justify-between transition-all';
+            } else {
+                lbl.innerText = 'OFF (Natural)';
+                lbl.className = 'text-rose-400';
+                btn.className = 'p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 text-xs font-bold text-slate-300 flex items-center justify-between transition-all';
+            }
+        }
+
+        function toggleDeforest() {
+            audio.playClick();
+            gameState.deforest = !gameState.deforest;
+            const lbl = document.getElementById('lbl-deforest');
+            const btn = document.getElementById('btn-toggle-deforest');
+            if (gameState.deforest) {
+                lbl.innerText = 'ON (Cleared)';
+                lbl.className = 'text-amber-400';
+                btn.className = 'p-2.5 rounded-xl bg-amber-950 border border-amber-500 text-xs font-bold text-slate-100 flex items-center justify-between transition-all';
+            } else {
+                lbl.innerText = 'OFF';
+                lbl.className = 'text-slate-400';
+                btn.className = 'p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/50 text-xs font-bold text-slate-300 flex items-center justify-between transition-all';
+            }
+        }
+
+        function toggleCheatSheet() {
+            audio.playClick();
+            const content = document.getElementById('cheatsheet-content');
+            const chevron = document.getElementById('cheatsheet-chevron');
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // --- 10 COMPREHENSIVE ENGINEERING LEVELS DATA & VALIDATION ---
+        const levels = [
+            null, // 1-indexed
+            {
+                id: 1,
+                title: "Level 1: Missing Rainfall Station Estimation",
+                category: "Normal Ratio Method",
+                points: 100,
+                concept: "Precipitation Estimation & Normal Ratio Method",
+                formula: `P_X = \\frac{N_X}{M} \\sum_{i=1}^{M} \\frac{P_i}{N_i}`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Gauge Station X was inoperable during a storm. Surrounding gauges A, B, and C recorded precipitations <strong class="text-cyan-300 font-mono">P_A = 75 mm, P_B = 88 mm, P_C = 92 mm</strong>. Normal annual rainfalls are <strong class="text-amber-300 font-mono">N_X = 1000 mm, N_A = 800 mm, N_B = 950 mm, N_C = 1100 mm</strong>. <br> Since annual variations exceed 10%, calculate missing rainfall <strong class="text-cyan-300 font-mono">P_X (mm)</strong> using Normal Ratio Method:
+                    </p>
+                    <div class="p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="text-slate-300 font-semibold">Station P_X (mm):</span>
+                            <input type="number" step="0.1" id="l1-input" placeholder="Result mm" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                        </div>
+                    </div>
+                `,
+                validate: () => {
+                    // P_X = (1000 / 3) * (75/800 + 88/950 + 92/1100) = 333.33 * (0.09375 + 0.09263 + 0.08364) = 333.33 * 0.27002 = 90.00 mm
+                    const val = parseFloat(document.getElementById('l1-input').value);
+                    if (Math.abs(val - 90.0) <= 0.8) {
+                        gameState.precip = 90;
+                        document.getElementById('ctrl-rain').value = 90;
+                        updatePhysicsParams();
+                        return { ok: true, msg: "Correct! P_X = 90.0 mm. Storm cloud condensation intensity updated on canvas!" };
+                    }
+                    return { ok: false, msg: "Incorrect. Formula: P_X = (1000/3) * (75/800 + 88/950 + 92/1100) ≈ 90.0 mm." };
+                }
+            },
+            {
+                id: 2,
+                title: "Level 2: Streamflow Velocity-Area Method",
+                category: "Discharge Integration",
+                points: 110,
+                concept: "River Velocity Profile & Continuity Q = A * V",
+                formula: `Q = \\sum a_i v_i = \\sum (b_i \\cdot d_i) \\cdot v_i`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A river channel is divided into 3 sub-sections for current-meter velocity profiling:
+                    </p>
+                    <div class="text-[11px] font-mono bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 text-slate-300">
+                        <div>Sub-1: Width b1 = 4m, Depth d1 = 2m, Velocity v1 = 1.2 m/s</div>
+                        <div>Sub-2: Width b2 = 5m, Depth d2 = 3m, Velocity v2 = 1.8 m/s</div>
+                        <div>Sub-3: Width b3 = 3m, Depth d3 = 1.5m, Velocity v3 = 0.8 m/s</div>
+                    </div>
+                    <p class="text-xs text-slate-300">Calculate total river discharge <strong class="text-cyan-300 font-mono">Q (m³/s)</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Total Discharge Q (m³/s):</span>
+                        <input type="number" step="0.1" id="l2-input" placeholder="Q m³/s" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // Q = (4*2*1.2) + (5*3*1.8) + (3*1.5*0.8) = 9.6 + 27.0 + 3.6 = 40.2 m3/s
+                    const val = parseFloat(document.getElementById('l2-input').value);
+                    if (Math.abs(val - 40.2) <= 0.3) {
+                        return { ok: true, msg: "Correct! Total River Discharge Q = 40.2 m³/s. River flow current velocity boosted!" };
+                    }
+                    return { ok: false, msg: "Incorrect! Q = (4×2×1.2) + (5×3×1.8) + (3×1.5×0.8) = 40.2 m³/s." };
+                }
+            },
+            {
+                id: 3,
+                title: "Level 3: Manning's Open Channel Hydraulics",
+                category: "Trapezoidal Channel Flow",
+                points: 120,
+                concept: "Manning Equation & Hydraulic Radius",
+                formula: `Q = \\frac{1}{n} A R_h^{2/3} S_0^{1/2}, \\quad R_h = \\frac{A}{P}`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A rectangular concrete storm channel (<strong class="text-cyan-300 font-mono">n = 0.015</strong>) has bottom width <strong class="text-amber-300 font-mono">b = 4.0 m</strong> and water depth <strong class="text-amber-300 font-mono">y = 2.0 m</strong>. Slope <strong class="text-cyan-300 font-mono">S₀ = 0.0016 (S₀¹/² = 0.04)</strong>. <br>
+                        Calculate: Area <strong class="font-mono text-slate-200">A = 8 m²</strong>, Wetted Perimeter <strong class="font-mono text-slate-200">P = 8 m</strong>, Hydraulic Radius <strong class="font-mono text-slate-200">R_h = 1.0 m</strong>. <br>
+                        Compute normal discharge capacity <strong class="text-cyan-300 font-mono">Q (m³/s)</strong>:
+                    </p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Channel Capacity Q (m³/s):</span>
+                        <input type="number" step="0.1" id="l3-input" placeholder="Q m³/s" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // Q = (1 / 0.015) * 8.0 * (1.0)^(2/3) * 0.04 = 66.666 * 8.0 * 1.0 * 0.04 = 21.33 m3/s
+                    const val = parseFloat(document.getElementById('l3-input').value);
+                    if (Math.abs(val - 21.33) <= 0.4) {
+                        return { ok: true, msg: "Correct! Q = 21.33 m³/s. Open channel hydraulic flow animated!" };
+                    }
+                    return { ok: false, msg: "Incorrect! Q = (1/0.015) × 8.0 × (1.0)^(2/3) × 0.04 ≈ 21.33 m³/s." };
+                }
+            },
+            {
+                id: 4,
+                title: "Level 4: Rational Runoff & Urban Watersheds",
+                category: "Composite Runoff Coefficient",
+                points: 130,
+                concept: "Rational Method Peak Flow Q = C * I * A",
+                formula: `C_w = \\frac{\\sum C_i A_i}{\\sum A_i}, \\quad Q_p = 0.00278 \\cdot C_w \\cdot I \\cdot A`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A 50-hectare (<strong class="font-mono text-amber-300">A = 50 ha</strong>) mixed urban catchment experiences a 10-year storm intensity <strong class="font-mono text-cyan-300">I = 90 mm/hr</strong>.
+                    </p>
+                    <div class="text-[11px] font-mono bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 text-slate-300">
+                        <div>Sub-area 1 (Asphalt/Roofs): A1 = 20 ha, C1 = 0.90</div>
+                        <div>Sub-area 2 (Lawns/Parks): A2 = 30 ha, C2 = 0.30</div>
+                    </div>
+                    <p class="text-xs text-slate-300">1) Composite Runoff Coeff <strong class="text-slate-200 font-mono">C_w = (20*0.9 + 30*0.3)/50 = 0.54</strong>.<br>2) Calculate peak runoff <strong class="text-cyan-300 font-mono">Q_p (m³/s)</strong> using <strong class="font-mono">Q = 0.00278 × C_w × I × A</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Peak Runoff Q_p (m³/s):</span>
+                        <input type="number" step="0.1" id="l4-input" placeholder="Q_p m³/s" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // Q_p = 0.00278 * 0.54 * 90 * 50 = 6.7554 m3/s
+                    const val = parseFloat(document.getElementById('l4-input').value);
+                    if (Math.abs(val - 6.76) <= 0.2) {
+                        gameState.urban = true;
+                        document.getElementById('lbl-urban').innerText = 'ON (Asphalt)';
+                        document.getElementById('lbl-urban').className = 'text-cyan-400';
+                        return { ok: true, msg: "Correct! Peak Runoff Q_p = 6.76 m³/s. Urban runoff streams activated!" };
+                    }
+                    return { ok: false, msg: "Incorrect! Q_p = 0.00278 × 0.54 × 90 × 50 ≈ 6.76 m³/s." };
+                }
+            },
+            {
+                id: 5,
+                title: "Level 5: SCS Curve Number Direct Runoff",
+                category: "Hydrologic Abstraction",
+                points: 140,
+                concept: "SCS CN Method Direct Direct Runoff Depth",
+                formula: `S = \\frac{25400}{CN} - 254, \\quad P_e = \\frac{(P - 0.2S)^2}{P + 0.8S}`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A watershed with Curve Number <strong class="font-mono text-cyan-300">CN = 80</strong> receives a storm rainfall <strong class="font-mono text-amber-300">P = 125 mm</strong>.
+                    </p>
+                    <div class="text-[11px] font-mono bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 text-slate-300">
+                        <div>1) Potential Retention S = (25400 / 80) - 254 = 63.5 mm</div>
+                        <div>2) Initial Abstraction I_a = 0.2 × S = 12.7 mm</div>
+                    </div>
+                    <p class="text-xs text-slate-300">Calculate direct effective runoff depth <strong class="text-cyan-300 font-mono">P_e (mm)</strong> using formula <strong class="font-mono">P_e = (P - I_a)² / (P + 0.8S)</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Direct Runoff P_e (mm):</span>
+                        <input type="number" step="0.1" id="l5-input" placeholder="P_e mm" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // P_e = (125 - 12.7)^2 / (125 + 0.8*63.5) = (112.3)^2 / (125 + 50.8) = 12611.29 / 175.8 = 71.74 mm
+                    const val = parseFloat(document.getElementById('l5-input').value);
+                    if (Math.abs(val - 71.7) <= 0.6) {
+                        return { ok: true, msg: "Correct! Effective Direct Runoff P_e = 71.7 mm. Soil vadose infiltration update!" };
+                    }
+                    return { ok: false, msg: "Incorrect! P_e = (125 - 12.7)² / (125 + 50.8) ≈ 71.7 mm." };
+                }
+            },
+            {
+                id: 6,
+                title: "Level 6: Minor Drainage Catchpit & Pipe Hydraulics",
+                category: "Storm Pipe Hydraulics",
+                points: 150,
+                concept: "Pipe Flow Diameter Sizing",
+                formula: `A_{pipe} = \\frac{\\pi D^2}{4}, \\quad V = \\frac{Q}{A}`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A street catchpit collects a peak storm discharge <strong class="font-mono text-cyan-300">Q = 0.45 m³/s</strong>. Maximum allowed flow velocity in the concrete storm pipe is <strong class="font-mono text-amber-300">V = 2.5 m/s</strong> to prevent erosion.
+                    </p>
+                    <p class="text-xs text-slate-300">1) Required Pipe Area <strong class="font-mono text-slate-200">A = Q / V = 0.45 / 2.5 = 0.18 m²</strong>.<br>2) Calculate minimum internal pipe diameter <strong class="text-cyan-300 font-mono">D (meters)</strong> using <strong class="font-mono">D = √(4A / π)</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Required Pipe Dia D (m):</span>
+                        <input type="number" step="0.01" id="l6-input" placeholder="D meters" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // D = sqrt(4 * 0.18 / pi) = sqrt(0.72 / 3.14159) = sqrt(0.22918) = 0.4787 m ≈ 0.48 m
+                    const val = parseFloat(document.getElementById('l6-input').value);
+                    if (Math.abs(val - 0.48) <= 0.03) {
+                        return { ok: true, msg: "Correct! Minimum internal pipe diameter D = 0.48 m (480 mm). Storm pipe laid!" };
+                    }
+                    return { ok: false, msg: "Incorrect! D = √(4 × 0.18 / π) ≈ 0.48 m." };
+                }
+            },
+            {
+                id: 7,
+                title: "Level 7: Major Drainage Detention Basin Sizing",
+                category: "Flood Peak Attenuation",
+                points: 160,
+                concept: "Detention Storage Volume Sizing",
+                formula: `V_s = V_{in} \\cdot \\left(1 - \\frac{Q_{out}}{Q_{in}}\\right)`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        To protect a downstream town from flash flooding, a detention pond must attenuate an inflow hydrograph volume <strong class="font-mono text-cyan-300">V_in = 35,000 m³</strong>. Peak inflow is <strong class="font-mono text-rose-400">Q_in = 25 m³/s</strong> and allowable downstream outlet capacity is restricted to <strong class="font-mono text-emerald-400">Q_out = 10 m³/s</strong>.
+                    </p>
+                    <p class="text-xs text-slate-300">Calculate required detention pond storage volume <strong class="text-cyan-300 font-mono">V_s (m³)</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Detention Pond Vol V_s (m³):</span>
+                        <input type="number" step="1" id="l7-input" placeholder="V_s m³" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // V_s = 35000 * (1 - 10/25) = 35000 * (1 - 0.4) = 35000 * 0.6 = 21,000 m3
+                    const val = parseInt(document.getElementById('l7-input').value);
+                    if (Math.abs(val - 21000) <= 200) {
+                        return { ok: true, msg: "Correct! Required Storage Volume V_s = 21,000 m³. Flood detention basin constructed!" };
+                    }
+                    return { ok: false, msg: "Incorrect! V_s = 35,000 × (1 - 10/25) = 21,000 m³." };
+                }
+            },
+            {
+                id: 8,
+                title: "Level 8: Hydro-Electric Dam Spillway & Power",
+                category: "Spillway Hydraulics & Power",
+                points: 170,
+                concept: "Weir Crest Discharge & Hydro Energy",
+                formula: `Q = C \\cdot L \\cdot H^{3/2}, \\quad P = \\eta \\cdot \\rho \\cdot g \\cdot Q \\cdot H_{head}`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A hydro-electric dam spillway crest length <strong class="font-mono text-amber-300">L = 30 m</strong>, discharge coefficient <strong class="font-mono text-cyan-300">C = 2.2</strong>, and head over crest <strong class="font-mono text-amber-300">H = 4.0 m (H^1.5 = 8.0)</strong>.
+                    </p>
+                    <p class="text-xs text-slate-300">1) Calculate spillway discharge <strong class="font-mono text-slate-200">Q = 2.2 × 30 × 8.0 = 528 m³/s</strong>.<br>2) Given net head <strong class="font-mono text-cyan-300">H_head = 50 m</strong> and plant efficiency <strong class="font-mono">η = 0.85</strong>, calculate generated hydro power <strong class="text-amber-300 font-mono">P (in Megawatts, MW)</strong> using <strong class="font-mono">P = (0.85 × 1000 × 9.81 × 528 × 50) / 1,000,000</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Hydro Power Output (MW):</span>
+                        <input type="number" step="0.1" id="l8-input" placeholder="P Megawatts" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-amber-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // P = (0.85 * 1000 * 9.81 * 528 * 50) / 1e6 = 220,103.22 / 1000 = 220.1 MW
+                    const val = parseFloat(document.getElementById('l8-input').value);
+                    if (Math.abs(val - 220.1) <= 2.5) {
+                        gameState.damGate = 85;
+                        updatePhysicsParams();
+                        return { ok: true, msg: "Correct! Spillway Discharge Q = 528 m³/s & Hydro Power = 220.1 MW! Turbines running at peak!" };
+                    }
+                    return { ok: false, msg: "Incorrect! P = (0.85 × 1000 × 9.81 × 528 × 50) / 10⁶ ≈ 220.1 MW." };
+                }
+            },
+            {
+                id: 9,
+                title: "Level 9: Groundwater Dupuit Well Hydraulics",
+                category: "Unconfined Aquifer Flow",
+                points: 180,
+                concept: "Dupuit-Thiem Well Pumping Drawdown",
+                formula: `Q = \\frac{\\pi K (h_2^2 - h_1^2)}{\\ln(r_2 / r_1)}`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        A test well in an unconfined aquifer pumps at rate <strong class="font-mono text-cyan-300">Q = 0.05 m³/s</strong>. Observation wells at radii <strong class="font-mono text-amber-300">r1 = 10 m</strong> and <strong class="font-mono text-amber-300">r2 = 100 m</strong> record unconfined head depths <strong class="font-mono text-slate-200">h1 = 18 m (h1² = 324)</strong> and <strong class="font-mono text-slate-200">h2 = 20 m (h2² = 400)</strong>. Note <strong class="font-mono">ln(100/10) = 2.3026</strong>.
+                    </p>
+                    <p class="text-xs text-slate-300">Calculate aquifer hydraulic conductivity <strong class="text-cyan-300 font-mono">K (m/s)</strong> in scientific notation multiplier <strong class="font-mono">K × 10⁻⁴ m/s</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">K multiplier (×10⁻⁴ m/s):</span>
+                        <input type="number" step="0.01" id="l9-input" placeholder="e.g. 4.82" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // Q = pi * K * (400 - 324) / 2.3026  => 0.05 = (3.14159 * 76 * K) / 2.3026
+                    // 0.05 = 103.684 * K => K = 0.05 / 103.684 = 0.0004822 m/s = 4.82 x 10^-4 m/s
+                    const val = parseFloat(document.getElementById('l9-input').value);
+                    if (Math.abs(val - 4.82) <= 0.15) {
+                        gameState.groundwaterActive = true;
+                        return { ok: true, msg: "Correct! Hydraulic Conductivity K = 4.82 × 10⁻⁴ m/s. Subsurface aquifer drawdown rendered!" };
+                    }
+                    return { ok: false, msg: "Incorrect! K = (0.05 × 2.3026) / (π × 76) ≈ 4.82 × 10⁻⁴ m/s." };
+                }
+            },
+            {
+                id: 10,
+                title: "Level 10: Master Hydraulic Engineering Challenge",
+                category: "Integrated Urban Storm Defense",
+                points: 200,
+                concept: "Integrated Urban Storm Defense & Multi-Stage Calibration",
+                formula: `Q_{peak} = C I A, \\quad D_{pipe} = \\sqrt{\\frac{4 Q_{peak}}{\\pi V}}, \\quad Gate\\% = \\frac{Q_{peak}}{Q_{max}} \\times 100`,
+                render: () => `
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        <strong class="text-rose-400 uppercase">Emergency Category 5 Storm Event!</strong> <br>
+                        A 100-ha urban catchment (<strong class="font-mono text-amber-300">A = 100 ha</strong>) with runoff coeff <strong class="font-mono text-cyan-300">C = 0.80</strong> is struck by rainfall intensity <strong class="font-mono text-sky-300">I = 120 mm/hr</strong>.
+                    </p>
+                    <div class="text-[11px] font-mono bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1 text-slate-300">
+                        <div>Step 1: Compute Peak Runoff Q_peak = 0.00278 × 0.80 × 120 × 100 = 26.688 m³/s</div>
+                        <div>Step 2: If main diversion conduit velocity V = 4.0 m/s, compute Dia D = √(4 × 26.688 / (π × 4.0)) = 2.91 m</div>
+                    </div>
+                    <p class="text-xs text-slate-300">Calculate the Dam Spillway Gate setting percentage required to discharge <strong class="font-mono text-amber-300">26.688 m³/s</strong> if 100% gate capacity is <strong class="font-mono text-cyan-300">33.36 m³/s</strong>:</p>
+                    <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-300 font-semibold">Required Spillway Gate (%):</span>
+                        <input type="number" step="1" id="l10-input" placeholder="Gate %" class="w-28 px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-amber-300 font-mono text-sm text-center focus:border-cyan-400 focus:outline-none">
+                    </div>
+                `,
+                validate: () => {
+                    // Gate % = (26.688 / 33.36) * 100 = 80.0%
+                    const val = parseInt(document.getElementById('l10-input').value);
+                    if (Math.abs(val - 80) <= 2) {
+                        gameState.damGate = 80;
+                        gameState.precip = 120;
+                        updatePhysicsParams();
+                        return { ok: true, msg: "MASTERFUL ENGINEERING! Gate calibrated to 80%! The city is saved from flash flooding!" };
+                    }
+                    return { ok: false, msg: "Incorrect! Required Gate % = (26.688 / 33.36) × 100 = 80%." };
+                }
+            }
+        ];
+
+        // --- RENDER LEVEL UI ---
+        function renderLevel(lvlNum) {
+            gameState.currentLevel = lvlNum;
+            const lvl = levels[lvlNum];
+
+            document.getElementById('hud-level').innerText = lvlNum;
+            document.getElementById('lvl-badge-category').innerText = lvl.category;
+            document.getElementById('lvl-title').innerText = lvl.title;
+            document.getElementById('lvl-points-val').innerText = `${lvl.points} PTS`;
+            document.getElementById('badge-active-concept').innerText = `Active: ${lvl.concept}`;
+
+            // Set Formula Cheatsheet
+            document.getElementById('cheatsheet-content').innerHTML = `
+                <div class="text-[11px] text-cyan-300 font-bold mb-1">Level ${lvlNum} Governing Equation:</div>
+                <div class="p-2 bg-slate-900 rounded border border-slate-800 text-center font-mono text-amber-300 text-xs">${lvl.formula}</div>
+            `;
+
+            const container = document.getElementById('lvl-prompt-container');
+            container.innerHTML = lvl.render();
+
+            // Hide previous feedback alert
+            const fb = document.getElementById('lvl-feedback');
+            fb.className = 'hidden p-3 rounded-xl mb-3 text-xs font-semibold';
+
+            updateMapStrip();
+            lucide.createIcons();
+        }
+
+        // --- SUBMIT ANSWER VALIDATION & REACTION ---
+        function submitLevelAnswer() {
+            const lvl = levels[gameState.currentLevel];
+            const result = lvl.validate();
+            const fb = document.getElementById('lvl-feedback');
+
+            fb.classList.remove('hidden');
+
+            if (result.ok) {
+                audio.playSuccess();
+                fb.className = 'p-3 rounded-xl mb-3 text-xs font-bold bg-emerald-950/90 border border-emerald-500/50 text-emerald-300';
+                fb.innerText = result.msg;
+
+                // Award points on first pass
+                if (gameState.levelScores[gameState.currentLevel] === 0) {
+                    gameState.levelScores[gameState.currentLevel] = lvl.points;
+                    gameState.totalScore += lvl.points;
+                    document.getElementById('hud-score').innerText = gameState.totalScore;
+                }
+
+                // Unlock Next Level Node
+                if (gameState.currentLevel < 10) {
+                    gameState.unlockedLevel = Math.max(gameState.unlockedLevel, gameState.currentLevel + 1);
+                    setTimeout(() => {
+                        renderLevel(gameState.currentLevel + 1);
+                    }, 2000);
+                } else {
+                    // COMPLETED ALL 10 ENGINEERING LEVELS!
+                    confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
+                    showCertificate();
+                }
+            } else {
+                audio.playError();
+                fb.className = 'p-3 rounded-xl mb-3 text-xs font-bold bg-rose-950/90 border border-rose-500/50 text-rose-300';
+                fb.innerText = result.msg;
+            }
+        }
+
+        // --- MAP STRIP CONTROLS ---
+        function updateMapStrip() {
+            for (let i = 1; i <= 10; i++) {
+                const node = document.getElementById(`map-node-${i}`);
+                if (i <= gameState.unlockedLevel) {
+                    node.classList.remove('opacity-50', 'cursor-not-allowed');
+                    node.classList.add('cursor-pointer');
+                    if (i === gameState.currentLevel) {
+                        node.className = 'map-node p-2 rounded-xl border-2 border-cyan-400 bg-cyan-950 text-center transition-all flex flex-col items-center gap-1 node-pulse';
+                    } else {
+                        node.className = 'map-node p-2 rounded-xl border border-emerald-500 bg-emerald-950/50 text-center transition-all flex flex-col items-center gap-1';
+                    }
+                }
+            }
+            const pct = Math.round((gameState.unlockedLevel / 10) * 100);
+            document.getElementById('journey-completion-pct').innerText = `${pct}% Unlocked`;
+        }
+
+        function jumpToLevel(lvlNum) {
+            if (lvlNum <= gameState.unlockedLevel) {
+                audio.playClick();
+                renderLevel(lvlNum);
+            }
+        }
+
+        // --- CERTIFICATE MODAL ---
+        function showCertificate() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            document.getElementById('cert-player-name').innerText = gameState.playerName;
+            document.getElementById('cert-score').innerText = `${gameState.totalScore} PTS`;
+            const mins = Math.floor(gameState.secondsElapsed / 60).toString().padStart(2, '0');
+            const secs = (gameState.secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('cert-time').innerText = `${mins}:${secs}`;
+            document.getElementById('modal-certificate').classList.remove('hidden');
+        }
+
+        function restartQuest() {
+            audio.playClick();
+            gameState.currentLevel = 1;
+            gameState.unlockedLevel = 1;
+            gameState.totalScore = 0;
+            gameState.secondsElapsed = 0;
+            gameState.levelScores.fill(0);
+            document.getElementById('hud-score').innerText = '0';
+            document.getElementById('modal-certificate').classList.add('hidden');
+            startTimer();
+            renderLevel(1);
+        }
+
+        // --- HIGH-DEFINITION 2D CANVAS PHYSICS & PARTICLE SYSTEM ---
+        const canvas = document.getElementById('hydrologyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Particle System Pool
+        const vaporParticles = [];
+        for(let i=0; i<45; i++) {
+            vaporParticles.push({
+                x: Math.random(),
+                y: Math.random(),
+                speed: 0.001 + Math.random()*0.002,
+                size: 2 + Math.random()*3
+            });
+        }
+
+        function drawSimulation() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 1. Sky Gradient based on Temperature & Rain
+            const sky = ctx.createLinearGradient(0, 0, 0, h * 0.65);
+            if (gameState.temp <= 0) {
+                sky.addColorStop(0, '#0f172a');
+                sky.addColorStop(1, '#334155');
+            } else if (gameState.precip > 60) {
+                sky.addColorStop(0, '#1e293b');
+                sky.addColorStop(1, '#475569');
+            } else {
+                sky.addColorStop(0, '#0284c7');
+                sky.addColorStop(1, '#bae6fd');
+            }
+            ctx.fillStyle = sky;
+            ctx.fillRect(0, 0, w, h);
+
+            // 2. Sun & Radiant Rays
+            const sunX = w * 0.85;
+            const sunY = h * 0.16;
+            const sunRadius = 22 + (gameState.solar * 0.12);
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Solar Heat Rays
+            if (gameState.solar > 40) {
+                ctx.strokeStyle = `rgba(253, 224, 71, ${gameState.solar / 200})`;
+                ctx.lineWidth = 2;
+                for(let i=0; i<10; i++) {
+                    const angle = (Date.now() * 0.0008) + (i * Math.PI / 5);
+                    ctx.beginPath();
+                    ctx.moveTo(sunX, sunY);
+                    ctx.lineTo(sunX + Math.cos(angle)*(sunRadius + 35), sunY + Math.sin(angle)*(sunRadius + 35));
+                    ctx.stroke();
+                }
+            }
+
+            // 3. Mountains & Soil Topography
+            ctx.fillStyle = gameState.deforest ? '#78350f' : '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.65);
+            ctx.lineTo(w * 0.28, h * 0.22);
+            ctx.lineTo(w * 0.58, h * 0.65);
+            ctx.fill();
+
+            // Mountain Snowcap (Temp <= 0°C)
+            if (gameState.temp <= 0) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(w * 0.28, h * 0.22);
+                ctx.lineTo(w * 0.22, h * 0.32);
+                ctx.lineTo(w * 0.34, h * 0.32);
+                ctx.fill();
+            }
+
+            // Foreground Ground Surface (Soil / Urban Asphalt)
+            ctx.fillStyle = gameState.urban ? '#334155' : '#15803d';
+            ctx.fillRect(0, h * 0.65, w * 0.65, h * 0.35);
+
+            // Subsurface Vadose Soil Infiltration Layer & Aquifer
+            ctx.fillStyle = 'rgba(14, 165, 233, 0.35)';
+            ctx.fillRect(0, h * 0.82, w * 0.65, h * 0.18);
+
+            // Subsurface Aquifer Drawdown Cone (Level 9)
+            if (gameState.groundwaterActive) {
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.arc(w * 0.25, h * 0.82, 35, 0, Math.PI, false);
+                ctx.fill();
+            }
+
+            // Ocean / Reservoir Body
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(w * 0.65, h * 0.65, w * 0.35, h * 0.35);
+
+            // 4. Fluid Water Vapor Particles rising from Ocean
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+            vaporParticles.forEach(p => {
+                p.y -= p.speed * (gameState.solar / 50);
+                if (p.y < 0.2) p.y = 0.65 + Math.random()*0.2;
+                const px = (w * 0.65) + (p.x * w * 0.3);
+                const py = p.y * h;
+                ctx.beginPath();
+                ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 5. Atmospheric Cloud Density & Condensation
+            const cAlpha = Math.min(0.95, 0.2 + (gameState.precip / 160));
+            ctx.fillStyle = `rgba(241, 245, 249, ${cAlpha})`;
+            ctx.beginPath();
+            ctx.arc(w * 0.30, h * 0.22, 38, 0, Math.PI * 2);
+            ctx.arc(w * 0.38, h * 0.18, 48, 0, Math.PI * 2);
+            ctx.arc(w * 0.46, h * 0.22, 38, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 6. Precipitation Particles (Rain Rain Vectors vs. Snow Drift)
+            if (gameState.precip > 5) {
+                const isSnow = gameState.temp <= 0;
+                ctx.strokeStyle = isSnow ? '#ffffff' : '#38bdf8';
+                ctx.fillStyle = '#ffffff';
+                ctx.lineWidth = isSnow ? 1 : 1.8;
+                const pCount = Math.floor(gameState.precip * 0.4);
+
+                for (let i = 0; i < pCount; i++) {
+                    const rx = (w * 0.18) + ((i * 17) % (w * 0.45));
+                    const ry = (h * 0.25) + (((Date.now() * 0.25 + i * 35) % (h * 0.40)));
+
+                    if (isSnow) {
+                        // Snow particle drift
+                        ctx.beginPath();
+                        ctx.arc(rx + Math.sin(Date.now()*0.002 + i)*6, ry, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        // Rain vector drop
+                        ctx.beginPath();
+                        ctx.moveTo(rx, ry);
+                        ctx.lineTo(rx - 2, ry + 10);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // 7. Hydro-Electric Dam Structure & Gate Discharge
+            const damX = w * 0.58;
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(damX, h * 0.55, 30, h * 0.18); // Wall
+
+            // Spillway Water Release
+            if (gameState.damGate > 0) {
+                const releaseH = (gameState.damGate / 100) * (h * 0.12);
+                ctx.fillStyle = 'rgba(186, 230, 253, 0.9)';
+                ctx.fillRect(damX + 30, h * 0.60, 40, releaseH);
+
+                // Hydraulic Jump Apron Spray
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(damX + 70, h * 0.60 + releaseH, 8 + releaseH * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            requestAnimationFrame(drawSimulation);
+        }
+
+        // --- WINDOW ONLOAD INIT ---
+        window.onload = function() {
+            resizeCanvas();
+            updatePhysicsParams();
+            drawSimulation();
+        };
+    </script>
+</body>
+</html>
